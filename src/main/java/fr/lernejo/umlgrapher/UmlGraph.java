@@ -1,26 +1,36 @@
 package fr.lernejo.umlgrapher;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
 public class UmlGraph {
+    private Class<?>[] aClass;
+    private final Set<UmlType> types = new TreeSet<>(Comparator
+        .<UmlType, String>comparing(t->t.name())
+        .thenComparing(t->t.packageName()));
 
-    private final Class<?>[] iClass;
+    private final Set<MermaidConnexion> connector = new TreeSet<>(Comparator
+        .<MermaidConnexion, String>comparing(t->t.getChildClass())
+        .thenComparing(t->t.getParentClass()));
 
-    public UmlGraph(Class<?>... classe) {
-        this.iClass = classe;
+    public UmlGraph(Class<?>... myclass){
+        this.aClass = myclass;
     }
 
     public String as (GraphType graphType){
-        String chaine = "classDiagram\n";
-        for (Class class_n : iClass) {
+        List<Class> tabClass = null;
+        for (Class nClass : aClass) {
             switch (graphType) {
                 case Mermaid:
-                    chaine = chaine + "class " + class_n.getSimpleName();
-                    if (class_n.isInterface()) {
-                        chaine = chaine + " {\n" + "    <<interface>>\n" + "}\n";
+                    tabClass = new InternalGraphRepresentation(nClass).whatIsYourRelate();
+                    for (Class i : tabClass) {
+                        types.add(new UmlType(i));
                     }
                     break;
             }
         }
-        return chaine;
+        return new MermaidFormatter(types).words() + new UmlRelation(types).allLinks(connector, types);
     }
-
 }
